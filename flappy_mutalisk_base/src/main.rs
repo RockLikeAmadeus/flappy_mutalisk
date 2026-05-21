@@ -1,12 +1,35 @@
 use bevy::{app::AppExit, prelude::*, window::WindowResolution};
 use my_library::*;
 
+const WINDOW_WIDTH: u32 = 1024;
+const WINDOW_HEIGHT: u32 = 768;
+const SCALE_FACTOR: f32 = 6.0;
+
+const VIRTUAL_WIDTH: f32 = WINDOW_WIDTH as f32 / SCALE_FACTOR;
+const VIRTUAL_HEIGHT: f32 = WINDOW_HEIGHT as f32 / SCALE_FACTOR;
+const WORLD_TOP: f32 = VIRTUAL_HEIGHT / 2.0;
+
+#[derive(Component)]
+struct Player {
+    gravity: f32
+}
+
+#[derive(Component)]
+struct Obstacle;
+
+// #[derive(Resource)]
+// struct Assets { // Not currently used, need to understand how we would use this with a sprite sheet
+//     muta: Handle<Image>,
+//     wall: Handle<Image>,
+// }
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Flappy Mutalisk".into(),
-                resolution: WindowResolution::new(1024, 768).with_scale_factor_override(6.0), //(1024, 768).into(),
+                resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT)
+                    .with_scale_factor_override(1.0),//SCALE_FACTOR),
                 ..default()
             }),
             ..default()
@@ -22,21 +45,52 @@ fn setup(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut rng: ResMut<RandomNumberGenerator>,
 ) {
+    commands.spawn(Camera2d);
+
     let player_sprite_sheet = asset_server.load("Dream-Catcher-enemies.png");
     let player_sprite_layout = TextureAtlasLayout::from_grid(UVec2::splat(8), 10, 21, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(player_sprite_layout);
-    // commands.insert_resource()
-    // let assets = Assets {
-    //     muta:
-    //     wall:
-    // }
-    commands.spawn(Camera2d);
-    commands.spawn((
+    let player_sprite = 
         Sprite::from_atlas_image(player_sprite_sheet, TextureAtlas {
             layout: texture_atlas_layout,
             index: 10,
-        }),
-        // Transform::from_scale(Vec3::splat(6.0)),
+        });
+    commands.spawn((
+        player_sprite,
         Transform::from_xyz(-55.0, 0.0, 1.0),
     ));
+
+    let wall_sprite_sheet = asset_server.load("Dream-Catcher-ground-wall.png");
+    let wall_sprite_layout = TextureAtlasLayout::from_grid(UVec2::splat(8), 32, 30, None, None);
+    let texture_atlas_layout = texture_atlas_layouts.add(wall_sprite_layout);
+    let wall_sprite = 
+        Sprite::from_atlas_image(wall_sprite_sheet, TextureAtlas {
+            layout: texture_atlas_layout,
+            index: 439,
+        });
+ 
+    build_wall(&mut commands, &wall_sprite, 8);
+}
+
+fn build_wall(
+    commands: &mut Commands,
+    wall_sprite: &Sprite,
+    gap_y: i32,
+) {
+    println!("WORLD TOP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: {WORLD_TOP}");
+    commands.spawn((
+        wall_sprite.clone(),
+        Transform::from_xyz(0.0, WINDOW_HEIGHT as f32 / 2.0 - 8.0, 1.0),
+        Obstacle,
+    ));
+
+    for y in -12..=-12{
+        if y < gap_y - 4 || y > gap_y + 4 {
+            commands.spawn((
+                wall_sprite.clone(),
+                Transform::from_xyz(45.0, y as f32 * 8.0, 1.0),
+                Obstacle,
+            ));
+        }
+    }
 }
