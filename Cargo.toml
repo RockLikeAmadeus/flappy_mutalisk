@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace.dependencies]
-bevy = "0.18.1"
+bevy = { version = "0.18.1", default-features = false, features = ["2d"] }
 bevy_egui = "0.39.1"
 my_library = { path = "my_library" }
 rand_pcg = "0.3"
