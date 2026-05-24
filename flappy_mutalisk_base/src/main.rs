@@ -95,10 +95,10 @@ fn build_wall(
     // ));
 
     for y in -11..=11{
-        if y < gap_center_y - 2 || y > gap_center_y + 2 {
+        if y < gap_center_y - 3 || y > gap_center_y + 2 {
             commands.spawn((
                 wall_sprite.clone(),
-                Transform::from_xyz(-4.0 * SPRITE_WIDTH_PIXELS, y as f32 * 8.0, 1.0),
+                Transform::from_xyz(-8.0 * SPRITE_WIDTH_PIXELS, y as f32 * 8.0, 1.0),
                 Obstacle,
             ));
         }
