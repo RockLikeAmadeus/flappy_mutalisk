@@ -1,16 +1,19 @@
 use bevy::{app::AppExit, gizmos, prelude::*, window::WindowResolution};
 use my_library::*;
 
-const WINDOW_WIDTH: u32 = 1024;
-const WINDOW_HEIGHT: u32 = 768;
+const PHYSICAL_WINDOW_WIDTH: u32 = 1024;
+const PHYSICAL_WINDOW_HEIGHT: u32 = 768;
 const SCALE_FACTOR: f32 = 4.0;
 
 const SPRITE_WIDTH_PIXELS:f32 = 8.0;
 const SPRITE_HEIGHT_PIXELS:f32 = 8.0;
 
-// const VIRTUAL_WIDTH: f32 = WINDOW_WIDTH as f32 / SCALE_FACTOR;
-// const VIRTUAL_HEIGHT: f32 = WINDOW_HEIGHT as f32 / SCALE_FACTOR;
+const LOGICAL_WIDTH: f32 = 32.0 * SPRITE_WIDTH_PIXELS;
+const LOGICAL_HEIGHT: f32 = 20.0 * SPRITE_HEIGHT_PIXELS;
 // const WORLD_TOP: f32 = VIRTUAL_HEIGHT / 2.0;
+
+const WORLD_BOUNDARY_TOP: f32 = LOGICAL_HEIGHT / 2.0;
+const WORLD_BOUNDARY_BOTTOM: f32 = LOGICAL_HEIGHT / -2.0;
 
 #[derive(Component)]
 struct Player {
@@ -31,7 +34,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Flappy Mutalisk".into(),
-                resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT)
+                resolution: WindowResolution::new(PHYSICAL_WINDOW_WIDTH, PHYSICAL_WINDOW_HEIGHT)
                     .with_scale_factor_override(SCALE_FACTOR),
                 ..default()
             }),
@@ -42,6 +45,7 @@ fn main() {
         .add_systems(Update, gravity)
         .add_systems(Update, flap)
         .add_systems(Update, draw_debug)
+        .add_systems(Update, clamp_player)
         .run();
 }
 
@@ -49,7 +53,6 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut drawer: Gizmos,
     mut rng: ResMut<RandomNumberGenerator>,
 ) {
     // Spawn camera
@@ -116,6 +119,19 @@ fn flap(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut Player>) {
     if keyboard.pressed(KeyCode::Space) {
         if let Ok(mut player) = query.single_mut() {
             player.gravity = -1.8;
+        }
+    }
+}
+
+fn clamp_player(
+    mut query: Query<&mut Transform, With<Player>>,
+    // mut exit: EventWriter<AppExit>,
+) {
+    if let Ok(mut transform) = query.single_mut() {
+        if transform.translation.y > WORLD_BOUNDARY_TOP {
+            transform.translation.y = WORLD_BOUNDARY_TOP;
+        } else if transform.translation.y < WORLD_BOUNDARY_BOTTOM {
+            transform.translation.y = WORLD_BOUNDARY_BOTTOM;
         }
     }
 }
